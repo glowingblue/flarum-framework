@@ -117,6 +117,7 @@ env:
   ci_script: ${{ inputs.js_package_manager == 'yarn' && 'yarn install --immutable' || 'npm ci' }}
   cache_dependency_path: ${{ inputs.cache_dependency_path || format(inputs.js_package_manager == 'yarn' && '{0}/yarn.lock' || '{0}/package-lock.json', inputs.frontend_directory) }}
   COMPOSER_AUTH: ${{ secrets.composer_auth }}
+  SERVICE_ACCOUNT_PAT: ${{ secrets.service_account_pat }}
 
 jobs:
   build:
