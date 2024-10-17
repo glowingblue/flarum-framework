@@ -166,6 +166,8 @@ jobs:
           package_manager: ${{ inputs.js_package_manager }}
           js_path: ${{ inputs.frontend_directory }}
           do_not_commit: ${{ github.ref != format('refs/heads/{0}', inputs.main_git_branch) || github.event_name != 'push' }}
+          git_actor_name: ${{ inputs.git_actor_name || '' }}
+          git_actor_email: ${{ inputs.git_actor_email || '' }}
 
       - name: Check bundle size change
         if: ${{ inputs.enable_bundlewatch }}
