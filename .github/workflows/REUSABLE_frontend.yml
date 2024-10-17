@@ -123,6 +123,10 @@ jobs:
   build:
     name: Checks & Build
     runs-on: ${{ inputs.runner_type }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GLOWINGBLUE_DEV_PAT: ${{ secrets.glowingblue_dev_pat }}
+
 
     if: >-
       ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) || github.event_name != 'pull_request')
