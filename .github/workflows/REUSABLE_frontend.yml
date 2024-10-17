@@ -157,7 +157,6 @@ jobs:
         uses: glowingblue/action-build@di/custom-actor
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          service_account_pat: ${{ secrets.service_account_pat }}
           build_script: ${{ inputs.build_script }}
           build_typings_script: ${{ inputs.build_typings_script }}
           format_script: ${{ inputs.enable_prettier == true && inputs.format_script || '' }}
