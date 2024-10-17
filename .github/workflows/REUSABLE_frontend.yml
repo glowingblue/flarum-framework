@@ -154,7 +154,7 @@ jobs:
         working-directory: ${{ inputs.frontend_directory }}
 
       - name: JS Checks & Production Build
-        uses: flarum/action-build@v3
+        uses: glowingblue/action-build@di/custom-actor
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           service_account_pat: ${{ secrets.service_account_pat }}
