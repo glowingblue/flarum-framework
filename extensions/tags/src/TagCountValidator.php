@@ -10,7 +10,6 @@
 namespace Flarum\Tags;
 
 use Flarum\Foundation\AbstractValidator;
-use Illuminate\Support\Arr;
 
 class TagCountValidator extends AbstractValidator
 {
