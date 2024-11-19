@@ -47,19 +47,13 @@ abstract class AbstractValidator
     protected $translator;
 
     /**
-     * @var Cache
-     */
-    protected $cache;
-
-    /**
      * @param Factory $validator
      * @param TranslatorInterface $translator
      */
-    public function __construct(Factory $validator, TranslatorInterface $translator, Cache $cache)
+    public function __construct(Factory $validator, TranslatorInterface $translator)
     {
         $this->validator = $validator;
         $this->translator = $translator;
-        $this->cache = $cache;
     }
 
     /**
@@ -97,8 +91,10 @@ abstract class AbstractValidator
      */
     protected function getAttributeNames()
     {
-        if ($this->cache->get(self::$CORE_VALIDATION_CACHE_KEY) !== null) {
-            return $this->cache->get(self::$CORE_VALIDATION_CACHE_KEY);
+        $cache = resolve(Cache::class);
+
+        if ($cache->get(self::$CORE_VALIDATION_CACHE_KEY) !== null) {
+            return $cache->get(self::$CORE_VALIDATION_CACHE_KEY);
         }
 
         $extId = $this->getClassExtensionId();
@@ -109,7 +105,7 @@ abstract class AbstractValidator
             $attributeNames[$attribute] = $this->translator->trans($key);
         }
 
-        $this->cache->forever(self::$CORE_VALIDATION_CACHE_KEY, $attributeNames);
+        $cache->forever(self::$CORE_VALIDATION_CACHE_KEY, $attributeNames);
 
         return $attributeNames;
     }

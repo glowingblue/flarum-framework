@@ -14,6 +14,7 @@ use Flarum\Foundation\ValidationException;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\Tags\Event\DiscussionWasTagged;
 use Flarum\Tags\Tag;
+use Flarum\Tags\TagCountValidator;
 use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Contracts\Validation\Factory;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -35,16 +36,24 @@ class SaveTagsToDatabase
      */
     protected $translator;
 
+
+    /**
+     * @var TagCountValidator
+     */
+    protected $tagCountValidator;
+
     /**
      * @param SettingsRepositoryInterface $settings
      * @param Factory $validator
      * @param TranslatorInterface $translator
+     * @param TagCountValidator $tagCountValidator
      */
-    public function __construct(SettingsRepositoryInterface $settings, Factory $validator, TranslatorInterface $translator)
+    public function __construct(SettingsRepositoryInterface $settings, Factory $validator, TranslatorInterface $translator, TagCountValidator $tagCountValidator)
     {
         $this->settings = $settings;
         $this->validator = $validator;
         $this->translator = $translator;
+        $this->tagCountValidator = $tagCountValidator;
     }
 
     /**
@@ -134,13 +143,10 @@ class SaveTagsToDatabase
         $max = $this->settings->get('flarum-tags.max_'.$type.'_tags');
         $key = 'tag_count_'.$type;
 
-        $validator = $this->validator->make(
-            [$key => $count],
-            [$key => ['numeric', $min === $max ? "size:$min" : "between:$min,$max"]]
-        );
+        $this->tagCountValidator->setType($type);
+        $this->tagCountValidator->setMin($min);
+        $this->tagCountValidator->setMax($max);
 
-        if ($validator->fails()) {
-            throw new ValidationException([], ['tags' => $validator->getMessageBag()->first($key)]);
-        }
+        $this->tagCountValidator->assertValid([$key => $count]);
     }
 }
