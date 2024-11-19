@@ -10,6 +10,7 @@
 namespace Flarum\Tags;
 
 use Flarum\Foundation\AbstractValidator;
+use Illuminate\Support\Arr;
 
 class TagCountValidator extends AbstractValidator
 {
@@ -88,12 +89,20 @@ class TagCountValidator extends AbstractValidator
         $min = $this->min;
         $max = $this->max;
 
-        return [
-            "tag_count_{$type}" => [
+        $key = "tag_count_{$type}";
+
+        $rules = [
+            $key => [
                 'numeric',
-                "size:{$min}",
-                "between:{$min},{$max}"
             ]
         ];
+
+        if ( $min === $max ) {
+            Arr::add($rules, $key, "size:{$min}");
+        } else {
+            Arr::add($rules, $key, "between:{$min},{$max}");
+        }
+
+        return $rules;
     }
 }
