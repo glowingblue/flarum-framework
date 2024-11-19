@@ -97,10 +97,10 @@ class TagCountValidator extends AbstractValidator
             ]
         ];
 
-        if ( $min === $max ) {
-            Arr::add($rules, $key, "size:{$min}");
+        if ($min === $max) {
+            $rules[$key][] = "size:{$min}";
         } else {
-            Arr::add($rules, $key, "between:{$min},{$max}");
+            $rules[$key][] = "between:{$min},{$max}";
         }
 
         return $rules;
