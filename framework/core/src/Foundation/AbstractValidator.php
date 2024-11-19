@@ -19,7 +19,7 @@ abstract class AbstractValidator
 {
     use ExtensionIdTrait;
 
-    public static string $CORE_VALIDATION_CACHE_KEY = 'core.validation.extension_id_class_names';
+    public static $CORE_VALIDATION_CACHE_KEY = 'core.validation.extension_id_class_names';
 
     /**
      * @var array
