@@ -36,7 +36,6 @@ class SaveTagsToDatabase
      */
     protected $translator;
 
-
     /**
      * @var TagCountValidator
      */
