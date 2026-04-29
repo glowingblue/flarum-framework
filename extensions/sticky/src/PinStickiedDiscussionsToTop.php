@@ -27,18 +27,8 @@ class PinStickiedDiscussionsToTop
     {
         if ($criteria->sortIsDefault && ! $state->isFulltextSearch()) {
             $query = $state->getQuery()->getQuery();
-            $onlyStickyUnread = $this->settings->get('flarum-sticky.only_sticky_unread_discussions');
 
-            // If only sticky unread discussions is disabled, then pin all stickied
-            // discussions to the top whether they are read or not.
-            if (! $onlyStickyUnread) {
-                $this->pinStickiedToTop($query);
-
-                return;
-            }
-
-            // If we are viewing a specific tag, then pin all stickied
-            // discussions to the top no matter what.
+            // Tag pages always pin stickied discussions to the top.
             $filters = $state->getActiveFilters();
 
             if ($count = count($filters)) {
@@ -49,14 +39,31 @@ class PinStickiedDiscussionsToTop
                 return;
             }
 
-            // Otherwise, if we are viewing "all discussions", only pin stickied
-            // discussions to the top if they are unread. To do this in a
-            // performant way we create another query which will select all
-            // stickied discussions, marry them into the main query, and then
+            // The remainder of this method handles the All Discussions page only.
+
+            // Admins can disable sticky pinning on this page entirely. When disabled,
+            // stickied discussions appear at their natural last_posted_at position
+            // and the only_sticky_unread_discussions setting becomes a no-op (the
+            // distinction between read and unread sticky no longer matters).
+            if (! $this->settings->get('flarum-sticky.pin_sticky_on_all_discussions', true)) {
+                return;
+            }
+
+            // If unread-only floating is disabled, pin all stickied discussions to
+            // the top regardless of read state.
+            if (! $this->settings->get('flarum-sticky.only_sticky_unread_discussions')) {
+                $this->pinStickiedToTop($query);
+
+                return;
+            }
+
+            // Otherwise, only pin stickied discussions to the top if they are unread.
+            // To do this in a performant way we create another query which will select
+            // all stickied discussions, marry them into the main query, and then
             // reorder the unread ones up to the top.
             $sticky = clone $query;
             $sticky->where('is_sticky', true);
-            unset($sticky->orders);
+            $sticky->orders = null;
 
             $epochTime = (new DateTime('@0'))->format('Y-m-d H:i:s');
 
@@ -65,7 +72,7 @@ class PinStickiedDiscussionsToTop
                 $read = $q->newQuery()
                     ->selectRaw('1')
                     ->from('discussion_user as sticky')
-                    ->whereColumn('sticky.discussion_id', 'id')
+                    ->whereColumn('sticky.discussion_id', 'discussions.id')
                     ->where('sticky.user_id', '=', $state->getActor()->id)
                     ->whereColumn('sticky.last_read_post_number', '>=', 'last_post_number');
 
@@ -84,7 +91,8 @@ class PinStickiedDiscussionsToTop
             $query->unionOffset = $query->offset;
 
             $query->limit = $sticky->limit = $query->offset + $query->limit;
-            unset($query->offset, $sticky->offset);
+            $query->offset = null;
+            $sticky->offset = null;
         }
     }
 
