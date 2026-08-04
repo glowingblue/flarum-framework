@@ -10,6 +10,7 @@
 namespace Flarum\Forum\Content;
 
 use Flarum\Api\Client;
+use Flarum\Api\Exception\ApiErrorResponseException;
 use Flarum\Frontend\Document;
 use Flarum\Http\UrlGenerator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -63,6 +64,7 @@ class User
      * Get the result of an API request to show a user.
      *
      * @throws ModelNotFoundException
+     * @throws ApiErrorResponseException
      */
     protected function getApiDocument(Request $request, string $username)
     {
@@ -73,6 +75,16 @@ class User
             throw new ModelNotFoundException;
         }
 
-        return json_decode($response->getBody());
+        $apiDocument = json_decode($response->getBody());
+
+        // A failed subrequest will have been turned into a JSON:API error
+        // document by the API client's error handler. Rendering that as if it
+        // were the requested resource would only cause confusing secondary
+        // errors, so surface the failure to the frontend's error handler.
+        if ($statusCode >= 400 || ! isset($apiDocument->data)) {
+            throw new ApiErrorResponseException($statusCode, $apiDocument);
+        }
+
+        return $apiDocument;
     }
 }

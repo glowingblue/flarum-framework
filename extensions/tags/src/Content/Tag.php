@@ -10,6 +10,7 @@
 namespace Flarum\Tags\Content;
 
 use Flarum\Api\Client;
+use Flarum\Api\Exception\ApiErrorResponseException;
 use Flarum\Frontend\Document;
 use Flarum\Http\RequestUtil;
 use Flarum\Http\SlugManager;
@@ -17,6 +18,7 @@ use Flarum\Tags\Tag as TagModel;
 use Flarum\Tags\TagRepository;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\Arr;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -120,16 +122,44 @@ class Tag
 
     /**
      * Get the result of an API request to list discussions.
+     *
+     * @throws ApiErrorResponseException
      */
     protected function getApiDocument(Request $request, array $params)
     {
-        return json_decode($this->api->withParentRequest($request)->withQueryParams($params)->get('/discussions')->getBody());
+        $response = $this->api->withParentRequest($request)->withQueryParams($params)->get('/discussions');
+
+        return $this->parseApiDocument($response);
     }
 
+    /**
+     * @throws ApiErrorResponseException
+     */
     protected function getTagsDocument(Request $request, string $slug)
     {
-        return json_decode($this->api->withParentRequest($request)->withQueryParams([
+        $response = $this->api->withParentRequest($request)->withQueryParams([
             'include' => 'children,children.parent,parent,parent.children.parent,state'
-        ])->get("/tags/$slug")->getBody());
+        ])->get("/tags/$slug");
+
+        return $this->parseApiDocument($response);
+    }
+
+    /**
+     * @throws ApiErrorResponseException
+     */
+    private function parseApiDocument(ResponseInterface $response)
+    {
+        $statusCode = $response->getStatusCode();
+        $apiDocument = json_decode($response->getBody());
+
+        // A failed subrequest will have been turned into a JSON:API error
+        // document by the API client's error handler. Rendering that as if it
+        // were the requested resource would only cause confusing secondary
+        // errors, so surface the failure to the frontend's error handler.
+        if ($statusCode >= 400 || ! isset($apiDocument->data)) {
+            throw new ApiErrorResponseException($statusCode, $apiDocument);
+        }
+
+        return $apiDocument;
     }
 }

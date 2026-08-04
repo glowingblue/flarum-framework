@@ -10,6 +10,7 @@
 namespace Flarum\Forum\Content;
 
 use Flarum\Api\Client;
+use Flarum\Api\Exception\ApiErrorResponseException;
 use Flarum\Frontend\Document;
 use Flarum\Http\UrlGenerator;
 use Flarum\Settings\SettingsRepositoryInterface;
@@ -107,9 +108,23 @@ class Index
      * @param Request $request
      * @param array $params
      * @return object
+     *
+     * @throws ApiErrorResponseException
      */
     protected function getApiDocument(Request $request, array $params)
     {
-        return json_decode($this->api->withParentRequest($request)->withQueryParams($params)->get('/discussions')->getBody());
+        $response = $this->api->withParentRequest($request)->withQueryParams($params)->get('/discussions');
+        $statusCode = $response->getStatusCode();
+        $apiDocument = json_decode($response->getBody());
+
+        // A failed subrequest will have been turned into a JSON:API error
+        // document by the API client's error handler. Rendering that as if it
+        // were the requested resource would only cause confusing secondary
+        // errors, so surface the failure to the frontend's error handler.
+        if ($statusCode >= 400 || ! isset($apiDocument->data)) {
+            throw new ApiErrorResponseException($statusCode, $apiDocument);
+        }
+
+        return $apiDocument;
     }
 }

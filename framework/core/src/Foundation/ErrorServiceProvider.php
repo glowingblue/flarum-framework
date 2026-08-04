@@ -9,6 +9,7 @@
 
 namespace Flarum\Foundation;
 
+use Flarum\Api\Exception as ApiException;
 use Flarum\Extension\Exception as ExtensionException;
 use Flarum\Foundation\ErrorHandling as Handling;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -56,6 +57,7 @@ class ErrorServiceProvider extends AbstractServiceProvider
 
         $this->container->singleton('flarum.error.handlers', function () {
             return [
+                ApiException\ApiErrorResponseException::class => ApiException\ApiErrorResponseExceptionHandler::class,
                 IlluminateValidationException::class => Handling\ExceptionHandler\IlluminateValidationExceptionHandler::class,
                 ValidationException::class => Handling\ExceptionHandler\ValidationExceptionHandler::class,
                 ExtensionException\CircularDependenciesException::class => ExtensionException\CircularDependenciesExceptionHandler::class,
